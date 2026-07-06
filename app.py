@@ -3,112 +3,126 @@ import streamlit as st
 import pipeline
 
 st.set_page_config(
-    page_title="Strategia di Manutenzione Ottimale",
+    page_title="Optimal Maintenance Strategy",
     page_icon="🛠️",
     layout="centered",
 )
 
-st.title("🛠️ Strategia di Manutenzione Ottimale")
+st.title("🛠️ Optimal Maintenance Strategy")
 st.write(
-    "Questo strumento suggerisce, in base ai parametri del componente/impianto, "
-    "quale strategia di manutenzione è più conveniente tra **Correttiva**, "
-    "**Preventiva** e **Predittiva**, usando un modello ad albero decisionale "
-    "addestrato su un'analisi FMEA e sui costi di ciascuna politica."
+    "This tool suggests, based on the FMEA scenario and a few economic/reliability "
+    "parameters, which maintenance strategy is more convenient among **Corrective**, "
+    "**Preventive** and **Predictive**, using a decision tree trained on the cost "
+    "of each policy."
 )
 
 
-@st.cache_resource(show_spinner="Calcolo dei costi e addestramento dei modelli (una tantum)...")
-def carica_modelli():
+@st.cache_resource(show_spinner="Computing costs and training the models (one-time setup)...")
+def load_models():
     return pipeline.build_all("tabella_weibull.csv")
 
 
-dati = carica_modelli()
-models = dati["models"]
+data = load_models()
+models = data["models"]
 
 st.divider()
-st.subheader("1. Scenario FMEA")
+st.subheader("1. FMEA scenario")
 
 col1, col2, col3 = st.columns(3)
 with col1:
     predictability = st.selectbox(
-        "Predictability (rilevabilità)",
+        "Predictability",
         options=["HIGH", "MEDIUM", "LOW"],
-        help="Quanto è facile rilevare in anticipo un guasto imminente.",
+        help="How easily an incoming failure can be detected in advance.",
     )
 with col2:
     severity = st.selectbox(
-        "Severity (gravità del guasto)",
+        "Severity",
         options=["HIGH", "MEDIUM", "LOW"],
-        help="Impatto/costo del guasto se si verifica (mappato su Cf).",
+        help="Impact/cost of the failure if it occurs (mapped onto Cf).",
     )
 with col3:
     occurrence = st.selectbox(
-        "Occurrence (frequenza del guasto)",
+        "Occurrence",
         options=["HIGH", "MEDIUM", "LOW"],
-        help="Frequenza attesa del guasto (mappata su MTTF: HIGH = guasti frequenti).",
+        help="Expected failure frequency (mapped onto MTTF: HIGH = frequent failures).",
     )
 
-st.subheader("2. Parametri economici e affidabilistici")
+st.subheader("2. Economic & reliability parameters")
+st.caption(
+    "These values are free and continuous: the decision tree evaluates them against "
+    "its learned split thresholds, it is not limited to the discrete grid used for training."
+)
 
 c1, c2 = st.columns(2)
 with c1:
-    cinter = st.select_slider(
-        "Cinter — costo di un intervento (€)",
-        options=pipeline.Cinter_list,
-        value=pipeline.Cinter_list[len(pipeline.Cinter_list) // 2],
+    cinter = st.slider(
+        "Cinter — cost of a single intervention (€)",
+        min_value=500.0,
+        max_value=15000.0,
+        value=5000.0,
+        step=50.0,
     )
-    beta = st.select_slider(
-        "Beta — parametro di forma Weibull",
-        options=pipeline.beta_list,
-        value=pipeline.beta_list[len(pipeline.beta_list) // 2],
+    beta = st.slider(
+        "Beta — Weibull shape parameter",
+        min_value=1.0,
+        max_value=5.0,
+        value=2.5,
+        step=0.05,
     )
 with c2:
-    csystpdm = st.select_slider(
-        "CSystPdM — costo annuo del sistema di monitoraggio (€/anno)",
-        options=pipeline.CSystPdM_list,
-        value=pipeline.CSystPdM_list[len(pipeline.CSystPdM_list) // 2],
+    csystpdm = st.slider(
+        "CSystPdM — yearly cost of the monitoring system (€/year)",
+        min_value=500.0,
+        max_value=30000.0,
+        value=5000.0,
+        step=100.0,
     )
-    alfa = st.select_slider(
-        "Alfa — grado di utilizzo del sistema di monitoraggio",
-        options=pipeline.alfa_list,
-        value=pipeline.alfa_list[len(pipeline.alfa_list) // 2],
+    alfa = st.slider(
+        "Alfa — utilization level of the monitoring system",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.01,
     )
 
 st.divider()
 
-if st.button("🔍 Calcola strategia consigliata", type="primary", use_container_width=True):
-    risultato = pipeline.query_tree(models, predictability, severity, occurrence, cinter, csystpdm, beta, alfa)
+if st.button("🔍 Get recommended strategy", type="primary", use_container_width=True):
+    result = pipeline.query_tree(models, predictability, severity, occurrence, cinter, csystpdm, beta, alfa)
 
-    if "error" in risultato:
-        st.error(risultato["error"])
+    if "error" in result:
+        st.error(result["error"])
     else:
-        colori = {
+        colors = {
             "PREDICTIVE": "green",
             "PREVENTIVE": "orange",
             "CORRECTIVE": "red",
         }
-        strategia = risultato["strategy"]
-        colore = colori.get(strategia, "blue")
+        strategy = result["strategy"]
+        color = colors.get(strategy, "blue")
 
-        st.markdown(f"### Strategia consigliata: :{colore}[{strategia}]")
+        st.markdown(f"### Recommended strategy: :{color}[{strategy}]")
 
-        st.write("Probabilità stimata per lo scenario selezionato:")
-        proba = risultato["proba"]
-        for classe in ["PREDICTIVE", "PREVENTIVE", "CORRECTIVE"]:
-            if classe in proba:
-                st.progress(float(proba[classe]), text=f"{classe}: {proba[classe]:.0%}")
+        st.write("Estimated probability for the selected scenario:")
+        proba = result["proba"]
+        for cls in ["PREDICTIVE", "PREVENTIVE", "CORRECTIVE"]:
+            if cls in proba:
+                st.progress(float(proba[cls]), text=f"{cls}: {proba[cls]:.0%}")
 
-with st.expander("ℹ️ Come funziona / definizioni"):
+with st.expander("ℹ️ How it works / definitions"):
     st.markdown(
         """
-- **Correttiva**: si interviene solo dopo il guasto.
-- **Preventiva**: si sostituisce/interviene a intervalli programmati, calcolati
-  ottimizzando il compromesso tra costo del guasto e costo dell'intervento anticipato.
-- **Predittiva**: si monitora la condizione del componente e si interviene solo
-  quando i dati indicano un rischio imminente.
+- **Corrective**: intervene only after the failure occurs.
+- **Preventive**: replace/intervene at scheduled intervals, computed by optimizing
+  the trade-off between failure cost and early-intervention cost.
+- **Predictive**: monitor the component's condition and intervene only when the
+  data indicates an imminent risk.
 
-Per ciascuna delle 27 combinazioni di Predictability × Severity × Occurrence è stato
-addestrato un albero decisionale (profondità massima 3) che, dati Cinter, CSystPdM,
-Beta e Alfa, predice quale delle tre strategie minimizza il costo totale atteso.
+For each of the 27 combinations of Predictability × Severity × Occurrence, a
+decision tree (max depth 3) was trained that, given Cinter, CSystPdM, Beta and
+Alfa, predicts which of the three strategies minimizes the expected total cost.
+Since the tree only checks numeric thresholds, any continuous value for these
+four parameters can be evaluated, not just the discrete grid used during training.
         """
     )
