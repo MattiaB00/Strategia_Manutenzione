@@ -89,7 +89,7 @@ with c2:
 st.divider()
 
 if st.button("🔍 Get recommended strategy", type="primary", use_container_width=True):
-    result = pipeline.query_tree(models, predictability, severity, occurrence, cinter, csystpdm, beta, alfa)
+    result = pipeline.query_tree(models, detectability, severity, occurrence, cinter, csystpdm, beta, alfa)
 
     if "error" in result:
         st.error(result["error"])
@@ -119,7 +119,7 @@ with st.expander("ℹ️ How it works / definitions"):
 - **Predictive**: monitor the component's condition and intervene only when the
   data indicates an imminent risk.
 
-For each of the 27 combinations of Predictability × Severity × Occurrence, a
+For each of the 27 combinations of Detectability × Severity × Occurrence, a
 decision tree (max depth 3) was trained that, given Cinter, CSystPdM, Beta and
 Alfa, predicts which of the three strategies minimizes the expected total cost.
 Since the tree only checks numeric thresholds, any continuous value for these
