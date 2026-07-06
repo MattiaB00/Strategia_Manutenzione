@@ -72,14 +72,14 @@ with c1:
     )
 with c2:
     csystpdm = st.slider(
-        "CSystPdM — yearly cost of the monitoring system (€/year)",
+        "CSystPdM — yearly cost of the Predictive system (€/year)",
         min_value=500.0,
         max_value=100000.0,
         value=5000.0,
         step=100.0,
     )
     alfa = st.slider(
-        "Alfa — utilization level of the monitoring system",
+        "Alfa — Ratio between the cost of the Preventive system and the cost of the Predictive system",
         min_value=0.0,
         max_value=1.0,
         value=0.5,
