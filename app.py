@@ -10,7 +10,7 @@ st.set_page_config(
 
 st.title("🛠️ Optimal Maintenance Strategy")
 st.write(
-    "This tool suggests, based on the FMEA scenario and a few economic/reliability "
+    "This tool suggests, based on the FMECA scenario and a few economic/reliability "
     "parameters, which maintenance strategy is more convenient among **Corrective**, "
     "**Preventive** and **Predictive**, using a decision tree trained on the cost "
     "of each policy."
