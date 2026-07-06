@@ -30,8 +30,8 @@ st.subheader("1. FMEA scenario")
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    predictability = st.selectbox(
-        "Predictability",
+    detectability = st.selectbox(
+        "Detectability",
         options=["HIGH", "MEDIUM", "LOW"],
         help="How easily an incoming failure can be detected in advance.",
     )
