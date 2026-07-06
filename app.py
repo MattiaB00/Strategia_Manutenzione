@@ -66,7 +66,7 @@ with c1:
     beta = st.slider(
         "Beta — Weibull shape parameter",
         min_value=1.0,
-        max_value=5.0,
+        max_value=10.0,
         value=2.5,
         step=0.05,
     )
@@ -74,7 +74,7 @@ with c2:
     csystpdm = st.slider(
         "CSystPdM — yearly cost of the monitoring system (€/year)",
         min_value=500.0,
-        max_value=30000.0,
+        max_value=100000.0,
         value=5000.0,
         step=100.0,
     )
