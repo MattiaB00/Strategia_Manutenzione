@@ -67,7 +67,7 @@ with c1:
         "Beta — Weibull shape parameter",
         min_value=1.0,
         max_value=5.0,
-        value=3,
+        value=3.0,
         step=0.05,
     )
 with c2:
